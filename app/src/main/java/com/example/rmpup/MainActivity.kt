@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var previousButton: Button
     private lateinit var nextButton: Button
     private lateinit var questionTextView: TextView
+    var rightAnswers = 0
 
     private fun updateQuestion() {
         val questionTextResId = quizViewModel.currentQuestionText
@@ -27,6 +28,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkAnswer(userAnswer: Boolean) {
         val correctAnswer = quizViewModel.currentQuestionAnswer
+        quizViewModel.questionBank[quizViewModel.currentIndex].answered = true
+        if (userAnswer == correctAnswer)
+            rightAnswers++
         val messageResId = if (userAnswer == correctAnswer) {
             R.string.correct_toast
         } else {
@@ -34,6 +38,14 @@ class MainActivity : AppCompatActivity() {
         }
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
             .show()
+        if (quizViewModel.allAnswered()) {
+            Toast.makeText(
+                this,
+                "Правильных ответов $rightAnswers/${quizViewModel.questionBank.size}\n (${rightAnswers * 100 / quizViewModel.questionBank.size}%)",
+                Toast.LENGTH_LONG
+            )
+                .show()
+        }
     }
 
     override fun onStart() {
@@ -69,16 +81,15 @@ class MainActivity : AppCompatActivity() {
 
 
     private val quizViewModel: QuizViewModel by lazy {
-        ViewModelProvider(this).get(QuizViewModel::class.java)
+        ViewModelProvider(this)[QuizViewModel::class.java]
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate(Bundle?) called")
         setContentView(R.layout.activity_main)
         val currentIndex = savedInstanceState?.getInt(KEY_INDEX, 0) ?: 0
         quizViewModel.currentIndex = currentIndex
-
-
 
         trueButton = findViewById(R.id.true_button)
         falseButton = findViewById(R.id.false_button)
